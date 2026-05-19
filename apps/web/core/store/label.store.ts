@@ -34,6 +34,11 @@ export interface ILabelStore {
   // fetch actions
   fetchWorkspaceLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   fetchProjectLabels: (workspaceSlug: string, projectId: string) => Promise<IIssueLabel[]>;
+  // refresh actions
+  invalidateProjectLabelsCache: (projectId: string) => void;
+  invalidateWorkspaceLabelsCache: (workspaceSlug: string) => void;
+  refreshProjectLabels: (workspaceSlug: string, projectId: string) => Promise<IIssueLabel[]>;
+  refreshWorkspaceLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   // crud actions
   createLabel: (workspaceSlug: string, projectId: string, data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
   updateLabel: (
@@ -72,6 +77,10 @@ export class LabelStore implements ILabelStore {
       projectLabelsTree: computed,
 
       fetchProjectLabels: action,
+      invalidateProjectLabelsCache: action,
+      invalidateWorkspaceLabelsCache: action,
+      refreshProjectLabels: action,
+      refreshWorkspaceLabels: action,
       createLabel: action,
       updateLabel: action,
       updateLabelPosition: action,
@@ -189,6 +198,47 @@ export class LabelStore implements ILabelStore {
     });
 
   /**
+   * Invalidates the cache for project labels, forcing a refetch on next access
+   * @param projectId
+   */
+  invalidateProjectLabelsCache = (projectId: string) => {
+    runInAction(() => {
+      set(this.fetchedMap, projectId, false);
+    });
+  };
+
+  /**
+   * Invalidates the cache for workspace labels, forcing a refetch on next access
+   * @param workspaceSlug
+   */
+  invalidateWorkspaceLabelsCache = (workspaceSlug: string) => {
+    runInAction(() => {
+      set(this.fetchedMap, workspaceSlug, false);
+    });
+  };
+
+  /**
+   * Refreshes project labels by invalidating cache and refetching
+   * @param workspaceSlug
+   * @param projectId
+   * @returns Promise<IIssueLabel[]>
+   */
+  refreshProjectLabels = async (workspaceSlug: string, projectId: string) => {
+    this.invalidateProjectLabelsCache(projectId);
+    return await this.fetchProjectLabels(workspaceSlug, projectId);
+  };
+
+  /**
+   * Refreshes workspace labels by invalidating cache and refetching
+   * @param workspaceSlug
+   * @returns Promise<IIssueLabel[]>
+   */
+  refreshWorkspaceLabels = async (workspaceSlug: string) => {
+    this.invalidateWorkspaceLabelsCache(workspaceSlug);
+    return await this.fetchWorkspaceLabels(workspaceSlug);
+  };
+
+  /**
    * Creates a new label for a specific project and add it to the store
    * @param workspaceSlug
    * @param projectId
@@ -300,10 +350,9 @@ export class LabelStore implements ILabelStore {
    */
   deleteLabel = async (workspaceSlug: string, projectId: string, labelId: string) => {
     if (!this.labelMap[labelId]) return;
-    await this.issueLabelService.deleteIssueLabel(workspaceSlug, projectId, labelId).then(() => {
-      runInAction(() => {
-        delete this.labelMap[labelId];
-      });
+    await this.issueLabelService.deleteIssueLabel(workspaceSlug, projectId, labelId);
+    runInAction(() => {
+      delete this.labelMap[labelId];
     });
   };
 }

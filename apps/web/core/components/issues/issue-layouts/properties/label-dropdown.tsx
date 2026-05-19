@@ -23,6 +23,7 @@ import { ComboDropDown } from "@plane/ui";
 import { sortBySelectedFirst } from "@plane/utils";
 // hooks
 import { useLabel } from "@/hooks/store/use-label";
+import { useLabelAutoRefresh } from "@/hooks/use-label-auto-refresh";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useDropdownKeyDown } from "@/hooks/use-dropdown-key-down";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -197,6 +198,14 @@ export function LabelDropdown(props: ILabelDropdownProps) {
       inputRef.current.focus();
     }
   }, [isOpen, isMobile]);
+
+  // Auto-refresh labels when dropdown is open to pick up webhook changes
+  useLabelAutoRefresh({
+    workspaceSlug,
+    projectId,
+    enabled: isOpen,
+    intervalMs: 30000,
+  });
 
   useOutsideClickDetector(dropdownRef, handleClose);
 
