@@ -10,7 +10,7 @@ import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
 import { UploadCloud } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
-import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { TOAST_TYPE, setToast, setPromiseToast } from "@plane/propel/toast";
 import type { TIssueServiceType } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 // hooks
@@ -53,6 +53,7 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
     toggleDeleteAttachmentModal,
     fetchActivities,
   } = useIssueDetail(issueServiceType);
+  const { updateIssue } = useIssueDetail(issueServiceType).issue;
   const { operations: attachmentOperations, snapshot: attachmentSnapshot } = attachmentHelpers;
   const { create: createAttachment } = attachmentOperations;
   const { uploadStatus } = attachmentSnapshot;
@@ -65,6 +66,32 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
   const handleFetchPropertyActivities = useCallback(() => {
     fetchActivities(workspaceSlug, projectId, issueId);
   }, [fetchActivities, workspaceSlug, projectId, issueId]);
+
+  const handleMakeCoverImage = useCallback(
+    async (attachmentId: string) => {
+      const makeCoverPromise = updateIssue(workspaceSlug, projectId, issueId, {
+        cover_image_attachment_id: attachmentId,
+      }).then(() => {
+        handleFetchPropertyActivities();
+        return;
+      });
+
+      setPromiseToast(makeCoverPromise, {
+        loading: "Setting cover image...",
+        success: {
+          title: "Cover image set",
+          message: () => "This image is now the cover image",
+        },
+        error: {
+          title: "Failed to set cover image",
+          message: () => "Could not set this image as the cover",
+        },
+      });
+
+      return makeCoverPromise;
+    },
+    [updateIssue, workspaceSlug, projectId, issueId, handleFetchPropertyActivities]
+  );
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
@@ -100,7 +127,7 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
       });
       return;
     },
-    [createAttachment, maxFileSize, workspaceSlug, handleFetchPropertyActivities]
+    [createAttachment, maxFileSize, workspaceSlug, handleFetchPropertyActivities, t]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -112,8 +139,8 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
 
   return (
     <>
-      {uploadStatus?.map((uploadStatus) => (
-        <IssueAttachmentsUploadItem key={uploadStatus.id} uploadStatus={uploadStatus} />
+      {uploadStatus?.map((status) => (
+        <IssueAttachmentsUploadItem key={status.id} uploadStatus={status} />
       ))}
       {issueAttachments && (
         <>
@@ -147,6 +174,7 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
                 attachmentId={attachmentId}
                 disabled={disabled}
                 issueServiceType={issueServiceType}
+                onMakeCoverImage={handleMakeCoverImage}
               />
             ))}
           </div>

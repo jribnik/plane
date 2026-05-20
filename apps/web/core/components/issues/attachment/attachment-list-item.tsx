@@ -5,6 +5,7 @@
  */
 
 import { observer } from "mobx-react";
+import { Image } from "lucide-react";
 
 import { useTranslation } from "@plane/i18n";
 import { TrashIcon } from "@plane/propel/icons";
@@ -28,12 +29,13 @@ type TIssueAttachmentsListItem = {
   attachmentId: string;
   disabled?: boolean;
   issueServiceType?: TIssueServiceType;
+  onMakeCoverImage?: (attachmentId: string) => Promise<void>;
 };
 
 export const IssueAttachmentsListItem = observer(function IssueAttachmentsListItem(props: TIssueAttachmentsListItem) {
   const { t } = useTranslation();
   // props
-  const { attachmentId, disabled, issueServiceType = EIssueServiceType.ISSUES } = props;
+  const { attachmentId, disabled, issueServiceType = EIssueServiceType.ISSUES, onMakeCoverImage } = props;
   // store hooks
   const { getUserDetails } = useMember();
   const {
@@ -46,6 +48,7 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
   const fileExtension = getFileExtension(attachment?.attributes.name ?? "");
   const fileIcon = getFileIcon(fileExtension, 18);
   const fileURL = getFileURL(attachment?.asset_url ?? "");
+  const isImage = attachment?.attributes.name ? /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.attributes.name) : false;
   // hooks
   const { isMobile } = usePlatformOS();
 
@@ -87,6 +90,18 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
             )}
 
             <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
+              {isImage && onMakeCoverImage && (
+                <CustomMenu.MenuItem
+                  onClick={() => {
+                    onMakeCoverImage(attachmentId);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Image className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span>Make cover image</span>
+                  </div>
+                </CustomMenu.MenuItem>
+              )}
               <CustomMenu.MenuItem
                 onClick={() => {
                   toggleDeleteAttachmentModal(attachmentId);
