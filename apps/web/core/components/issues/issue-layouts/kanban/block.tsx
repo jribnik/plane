@@ -276,7 +276,7 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
           href={workItemLink}
           ref={cardRef}
           className={cn(
-            "block w-full rounded-lg border border-subtle bg-layer-2 overflow-hidden text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
+            "block w-full overflow-hidden rounded-lg border border-subtle bg-layer-2 text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
             { "hover:cursor-pointer": isDragAllowed },
             { "border border-accent-strong hover:border-accent-strong": getIsIssuePeeked(issue.id) },
             { "z-[100] bg-layer-1": isCurrentBlockDragging }
@@ -288,7 +288,7 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
             issueId={issue.id}
             projectId={issue.project_id}
             attachmentCount={issue.attachment_count}
-            coverImageAttachmentId={(issue as any).cover_image_attachment_id}
+            coverImageAttachmentId={issue.cover_image_attachment_id}
             isEpic={isEpic}
           />
           <div className="p-3">

@@ -103,7 +103,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         issueId={issueId}
         projectId={issue.project_id}
         attachmentCount={issue.attachment_count}
-        coverImageAttachmentId={(issue as any).cover_image_attachment_id}
+        coverImageAttachmentId={issue.cover_image_attachment_id}
       />
       <div className="space-y-2">
         {issue.parent_id && (
