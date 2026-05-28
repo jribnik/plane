@@ -53,7 +53,7 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
     toggleDeleteAttachmentModal,
     fetchActivities,
   } = useIssueDetail(issueServiceType);
-  const { updateIssue } = useIssueDetail(issueServiceType).issue;
+  const { updateIssue, getIssueById } = useIssueDetail(issueServiceType).issue;
   const { operations: attachmentOperations, snapshot: attachmentSnapshot } = attachmentHelpers;
   const { create: createAttachment } = attachmentOperations;
   const { uploadStatus } = attachmentSnapshot;
@@ -61,36 +61,41 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
   const { maxFileSize } = useFileSize();
   // derived values
   const issueAttachments = getAttachmentsByIssueId(issueId);
+  const coverImageAttachmentId = getIssueById(issueId)?.cover_image_attachment_id ?? null;
 
   // handlers
   const handleFetchPropertyActivities = useCallback(() => {
     fetchActivities(workspaceSlug, projectId, issueId);
   }, [fetchActivities, workspaceSlug, projectId, issueId]);
 
-  const handleMakeCoverImage = useCallback(
+  const handleToggleCoverImage = useCallback(
     async (attachmentId: string) => {
-      const makeCoverPromise = updateIssue(workspaceSlug, projectId, issueId, {
-        cover_image_attachment_id: attachmentId,
+      const isCurrentCover = getIssueById(issueId)?.cover_image_attachment_id === attachmentId;
+      const nextCoverId = isCurrentCover ? null : attachmentId;
+      const coverPromise = updateIssue(workspaceSlug, projectId, issueId, {
+        cover_image_attachment_id: nextCoverId,
       }).then(() => {
         handleFetchPropertyActivities();
         return;
       });
 
-      setPromiseToast(makeCoverPromise, {
-        loading: "Setting cover image...",
+      setPromiseToast(coverPromise, {
+        loading: isCurrentCover ? t("attachment.remove_cover_loading") : t("attachment.set_cover_loading"),
         success: {
-          title: "Cover image set",
-          message: () => "This image is now the cover image",
+          title: isCurrentCover ? t("attachment.remove_cover_success_title") : t("attachment.set_cover_success_title"),
+          message: () =>
+            isCurrentCover ? t("attachment.remove_cover_success_message") : t("attachment.set_cover_success_message"),
         },
         error: {
-          title: "Failed to set cover image",
-          message: () => "Could not set this image as the cover",
+          title: isCurrentCover ? t("attachment.remove_cover_error_title") : t("attachment.set_cover_error_title"),
+          message: () =>
+            isCurrentCover ? t("attachment.remove_cover_error_message") : t("attachment.set_cover_error_message"),
         },
       });
 
-      return makeCoverPromise;
+      return coverPromise;
     },
-    [updateIssue, workspaceSlug, projectId, issueId, handleFetchPropertyActivities]
+    [updateIssue, getIssueById, workspaceSlug, projectId, issueId, handleFetchPropertyActivities, t]
   );
 
   const onDrop = useCallback(
@@ -174,7 +179,8 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
                 attachmentId={attachmentId}
                 disabled={disabled}
                 issueServiceType={issueServiceType}
-                onMakeCoverImage={handleMakeCoverImage}
+                onToggleCoverImage={handleToggleCoverImage}
+                isCoverImage={coverImageAttachmentId === attachmentId}
               />
             ))}
           </div>

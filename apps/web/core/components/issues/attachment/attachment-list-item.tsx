@@ -5,7 +5,7 @@
  */
 
 import { observer } from "mobx-react";
-import { Image } from "lucide-react";
+import { Image, ImageOff } from "lucide-react";
 
 import { useTranslation } from "@plane/i18n";
 import { TrashIcon } from "@plane/propel/icons";
@@ -29,13 +29,20 @@ type TIssueAttachmentsListItem = {
   attachmentId: string;
   disabled?: boolean;
   issueServiceType?: TIssueServiceType;
-  onMakeCoverImage?: (attachmentId: string) => Promise<void>;
+  onToggleCoverImage?: (attachmentId: string) => Promise<void>;
+  isCoverImage?: boolean;
 };
 
 export const IssueAttachmentsListItem = observer(function IssueAttachmentsListItem(props: TIssueAttachmentsListItem) {
   const { t } = useTranslation();
   // props
-  const { attachmentId, disabled, issueServiceType = EIssueServiceType.ISSUES, onMakeCoverImage } = props;
+  const {
+    attachmentId,
+    disabled,
+    issueServiceType = EIssueServiceType.ISSUES,
+    onToggleCoverImage,
+    isCoverImage = false,
+  } = props;
   // store hooks
   const { getUserDetails } = useMember();
   const {
@@ -69,6 +76,12 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
             <Tooltip tooltipContent={`${fileName}.${fileExtension}`} isMobile={isMobile}>
               <p className="truncate font-medium text-secondary">{`${fileName}.${fileExtension}`}</p>
             </Tooltip>
+            {isCoverImage && (
+              <span className="flex flex-shrink-0 items-center gap-1 rounded bg-layer-1 px-1.5 py-0.5 text-11 text-tertiary">
+                <Image className="h-3 w-3" strokeWidth={2} />
+                {t("attachment.cover_label")}
+              </span>
+            )}
             <span className="flex size-1.5 rounded-full bg-layer-1" />
             <span className="flex-shrink-0 text-placeholder">{convertBytesToSize(attachment.attributes.size)}</span>
           </div>
@@ -90,15 +103,19 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
             )}
 
             <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
-              {isImage && onMakeCoverImage && (
+              {isImage && onToggleCoverImage && (
                 <CustomMenu.MenuItem
                   onClick={() => {
-                    onMakeCoverImage(attachmentId);
+                    onToggleCoverImage(attachmentId);
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <Image className="h-3.5 w-3.5" strokeWidth={2} />
-                    <span>Make cover image</span>
+                    {isCoverImage ? (
+                      <ImageOff className="h-3.5 w-3.5" strokeWidth={2} />
+                    ) : (
+                      <Image className="h-3.5 w-3.5" strokeWidth={2} />
+                    )}
+                    <span>{isCoverImage ? t("attachment.remove_cover_image") : t("attachment.make_cover_image")}</span>
                   </div>
                 </CustomMenu.MenuItem>
               )}
