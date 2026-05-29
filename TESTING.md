@@ -16,7 +16,7 @@ The project uses [Vitest](https://vitest.dev/) as the test framework along with 
 ### Configuration
 
 - `vitest.config.ts` - Vitest configuration
-- `vitest.setup.ts` - Global test setup (cleanup, matchers)
+- `vitest.setup.ts` - Global test setup: jest-dom matchers, an in-memory `localStorage`/`sessionStorage` (jsdom does not provide one), and per-test DOM + storage cleanup
 
 ## Running Tests
 
@@ -41,10 +41,11 @@ Test files are colocated with the source files they test:
 ```
 core/
 ├── hooks/
-│   ├── use-issue-cover-image.ts
-│   ├── use-issue-cover-image.test.ts
 │   ├── use-label-auto-refresh.ts
 │   └── use-label-auto-refresh.test.ts
+└── store/
+    ├── label.store.ts
+    └── label.store.test.ts
 ```
 
 ## Writing Tests
@@ -84,8 +85,8 @@ describe('MyComponent', () => {
 
 Tests currently cover:
 
-- ✅ `useIssueCoverImage` hook - Cover image selection logic
-- ✅ `useLabelAutoRefresh` hook - Auto-refresh functionality
+- ✅ `useLabelAutoRefresh` hook - Auto-refresh interval, enable/disable, and hidden-tab behavior
+- ✅ `LabelStore.refreshProjectLabels` - Merge/prune reconcile logic
 
 ## Future Work
 
