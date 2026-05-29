@@ -40,11 +40,9 @@ Test files are colocated with the source files they test:
 
 ```
 core/
-├── hooks/
-│   ├── use-issue-cover-image.ts
-│   ├── use-issue-cover-image.test.ts
-│   ├── use-label-auto-refresh.ts
-│   └── use-label-auto-refresh.test.ts
+└── hooks/
+    ├── use-issue-cover-image.ts
+    └── use-issue-cover-image.test.ts
 ```
 
 ## Writing Tests
@@ -84,8 +82,7 @@ describe('MyComponent', () => {
 
 Tests currently cover:
 
-- ✅ `useIssueCoverImage` hook - Cover image selection logic
-- ✅ `useLabelAutoRefresh` hook - Auto-refresh functionality
+- ✅ `useIssueCoverImage` hook - Explicit-id vs. filename-fallback resolution, no-attachment short-circuit, and stale-fetch guard
 
 ## Future Work
 
