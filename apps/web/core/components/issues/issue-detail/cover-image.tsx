@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import type { TIssueServiceType } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
+import { cn } from "@plane/utils";
 import { useIssueCoverImage } from "@/hooks/use-issue-cover-image";
 
 interface IssueDetailCoverImageProps {
@@ -17,10 +18,21 @@ interface IssueDetailCoverImageProps {
   attachmentCount: number;
   coverImageAttachmentId?: string | null;
   isEpic?: boolean;
+  // Negative margins must cancel the parent container's horizontal padding so the
+  // cover bleeds edge-to-edge. Defaults assume a px-8 container (peek overview);
+  // pass a matching value for other paddings (e.g. px-9 on the browse view).
+  layoutClassName?: string;
 }
 
 export const IssueDetailCoverImage = observer(function IssueDetailCoverImage(props: IssueDetailCoverImageProps) {
-  const { issueId, projectId, attachmentCount, coverImageAttachmentId, isEpic = false } = props;
+  const {
+    issueId,
+    projectId,
+    attachmentCount,
+    coverImageAttachmentId,
+    isEpic = false,
+    layoutClassName = "-mx-8 w-[calc(100%+4rem)]",
+  } = props;
   const { workspaceSlug } = useParams();
   const [imageLoadError, setImageLoadError] = useState(false);
 
@@ -35,9 +47,7 @@ export const IssueDetailCoverImage = observer(function IssueDetailCoverImage(pro
   );
 
   if (isLoading) {
-    return (
-      <div className="-mx-8 -mt-5 mb-4 h-60 w-[calc(100%+4rem)] animate-pulse bg-layer-1" />
-    );
+    return <div className={cn("-mt-5 mb-4 h-60 animate-pulse bg-layer-1", layoutClassName)} />;
   }
 
   if (!coverImageUrl || imageLoadError) {
@@ -45,7 +55,7 @@ export const IssueDetailCoverImage = observer(function IssueDetailCoverImage(pro
   }
 
   return (
-    <div className="-mx-8 -mt-5 mb-4 h-60 w-[calc(100%+4rem)] overflow-hidden">
+    <div className={cn("-mt-5 mb-4 h-60 overflow-hidden", layoutClassName)}>
       <img
         src={coverImageUrl}
         alt="Cover"
