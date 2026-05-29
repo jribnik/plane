@@ -4,12 +4,10 @@ import { useLabelAutoRefresh } from "./use-label-auto-refresh";
 
 // Mock the useLabel hook - must return promises
 const mockRefreshProjectLabels = vi.fn(() => Promise.resolve());
-const mockRefreshWorkspaceLabels = vi.fn(() => Promise.resolve());
 
 vi.mock("@/hooks/store/use-label", () => ({
   useLabel: () => ({
     refreshProjectLabels: mockRefreshProjectLabels,
-    refreshWorkspaceLabels: mockRefreshWorkspaceLabels,
   }),
 }));
 
@@ -54,6 +52,26 @@ describe("useLabelAutoRefresh", () => {
     expect(mockRefreshProjectLabels).toHaveBeenCalledWith("workspace-1", "project-1");
   });
 
+  it("should not refresh while the tab is hidden", () => {
+    const hiddenSpy = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+
+    renderHook(() =>
+      useLabelAutoRefresh({
+        workspaceSlug: "workspace-1",
+        projectId: "project-1",
+        enabled: true,
+      })
+    );
+
+    vi.advanceTimersByTime(30000);
+    expect(mockRefreshProjectLabels).not.toHaveBeenCalled();
+
+    // tab becomes visible again -> next tick refreshes
+    hiddenSpy.mockReturnValue(false);
+    vi.advanceTimersByTime(30000);
+    expect(mockRefreshProjectLabels).toHaveBeenCalledTimes(1);
+  });
+
   it("should not refresh when projectId is undefined", () => {
     renderHook(() =>
       useLabelAutoRefresh({
@@ -67,7 +85,6 @@ describe("useLabelAutoRefresh", () => {
 
     // Should not refresh when projectId is missing
     expect(mockRefreshProjectLabels).not.toHaveBeenCalled();
-    expect(mockRefreshWorkspaceLabels).not.toHaveBeenCalled();
   });
 
   it("should use custom interval when provided", () => {
@@ -188,6 +205,5 @@ describe("useLabelAutoRefresh", () => {
     vi.advanceTimersByTime(30000);
 
     expect(mockRefreshProjectLabels).not.toHaveBeenCalled();
-    expect(mockRefreshWorkspaceLabels).not.toHaveBeenCalled();
   });
 });

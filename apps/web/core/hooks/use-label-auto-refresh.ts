@@ -51,6 +51,7 @@ export const useLabelAutoRefresh = ({
     }
 
     intervalRef.current = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       refreshProjectLabels(workspaceSlug, projectId).catch((error) => {
         console.error("Failed to auto-refresh labels:", error);
       });

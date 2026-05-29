@@ -35,10 +35,7 @@ export interface ILabelStore {
   fetchWorkspaceLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   fetchProjectLabels: (workspaceSlug: string, projectId: string) => Promise<IIssueLabel[]>;
   // refresh actions
-  invalidateProjectLabelsCache: (projectId: string) => void;
-  invalidateWorkspaceLabelsCache: (workspaceSlug: string) => void;
   refreshProjectLabels: (workspaceSlug: string, projectId: string) => Promise<IIssueLabel[]>;
-  refreshWorkspaceLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   // crud actions
   createLabel: (workspaceSlug: string, projectId: string, data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
   updateLabel: (
@@ -77,10 +74,7 @@ export class LabelStore implements ILabelStore {
       projectLabelsTree: computed,
 
       fetchProjectLabels: action,
-      invalidateProjectLabelsCache: action,
-      invalidateWorkspaceLabelsCache: action,
       refreshProjectLabels: action,
-      refreshWorkspaceLabels: action,
       createLabel: action,
       updateLabel: action,
       updateLabelPosition: action,
@@ -198,44 +192,27 @@ export class LabelStore implements ILabelStore {
     });
 
   /**
-   * Invalidates the cache for project labels, forcing a refetch on next access
-   * @param projectId
-   */
-  invalidateProjectLabelsCache = (projectId: string) => {
-    runInAction(() => {
-      set(this.fetchedMap, projectId, false);
-    });
-  };
-
-  /**
-   * Invalidates the cache for workspace labels, forcing a refetch on next access
-   * @param workspaceSlug
-   */
-  invalidateWorkspaceLabelsCache = (workspaceSlug: string) => {
-    runInAction(() => {
-      set(this.fetchedMap, workspaceSlug, false);
-    });
-  };
-
-  /**
-   * Refreshes project labels by invalidating cache and refetching
+   * Refreshes project labels, reconciling the store with the server response.
+   * Unlike fetchProjectLabels this also prunes labels that no longer exist
+   * server-side (e.g. removed by a webhook automation). The refetch happens
+   * without flipping fetchedMap, so consumers never observe an empty list
+   * mid-refresh — important because an open label dropdown unmounts if its
+   * label list momentarily becomes empty.
    * @param workspaceSlug
    * @param projectId
    * @returns Promise<IIssueLabel[]>
    */
   refreshProjectLabels = async (workspaceSlug: string, projectId: string) => {
-    this.invalidateProjectLabelsCache(projectId);
-    return await this.fetchProjectLabels(workspaceSlug, projectId);
-  };
-
-  /**
-   * Refreshes workspace labels by invalidating cache and refetching
-   * @param workspaceSlug
-   * @returns Promise<IIssueLabel[]>
-   */
-  refreshWorkspaceLabels = async (workspaceSlug: string) => {
-    this.invalidateWorkspaceLabelsCache(workspaceSlug);
-    return await this.fetchWorkspaceLabels(workspaceSlug);
+    const response = await this.issueLabelService.getProjectLabels(workspaceSlug, projectId);
+    runInAction(() => {
+      const nextIds = new Set(response.map((label) => label.id));
+      Object.values(this.labelMap).forEach((label) => {
+        if (label?.project_id === projectId && !nextIds.has(label.id)) delete this.labelMap[label.id];
+      });
+      response.forEach((label) => set(this.labelMap, [label.id], label));
+      set(this.fetchedMap, projectId, true);
+    });
+    return response;
   };
 
   /**

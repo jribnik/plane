@@ -8,12 +8,9 @@ This feature enables multi-select dropdown options (specifically labels) to auto
 
 ### 1. Store-Level Support
 
-The `LabelStore` (`apps/web/core/store/label.store.ts`) now includes methods for cache invalidation and forced refresh:
+The `LabelStore` (`apps/web/core/store/label.store.ts`) includes a method for refreshing project labels:
 
-- **`invalidateProjectLabelsCache(projectId)`** - Clears the cache flag for a project's labels
-- **`invalidateWorkspaceLabelsCache(workspaceSlug)`** - Clears the cache flag for workspace labels  
-- **`refreshProjectLabels(workspaceSlug, projectId)`** - Invalidates cache and refetches project labels
-- **`refreshWorkspaceLabels(workspaceSlug)`** - Invalidates cache and refetches workspace labels
+- **`refreshProjectLabels(workspaceSlug, projectId)`** - Refetches project labels and reconciles them into the store: newly added labels are merged in, and labels that no longer exist server-side (e.g. removed by a webhook) are pruned. The reconcile runs in a single MobX action without flipping the `fetchedMap` flag, so consumers never observe an empty label list mid-refresh — important because an open label dropdown unmounts if its label list momentarily becomes empty.
 
 ### 2. Auto-Refresh Hook
 
@@ -23,14 +20,16 @@ The `useLabelAutoRefresh` hook (`apps/web/core/hooks/use-label-auto-refresh.ts`)
 useLabelAutoRefresh({
   workspaceSlug: "my-workspace",
   projectId: "project-123",
-  enabled: true,           // Enable/disable auto-refresh
-  intervalMs: 30000,       // Refresh every 30 seconds
+  enabled: true, // Enable/disable auto-refresh
+  intervalMs: 30000, // Refresh every 30 seconds
 });
 ```
 
 **Features:**
+
 - Automatically sets up an interval timer when enabled
 - Cleans up the interval when disabled or component unmounts
+- Skips refreshing while the tab is hidden (`document.hidden`) to avoid background polling
 - Handles errors gracefully with console logging
 - Can be conditionally enabled (e.g., only when dropdown is open)
 
@@ -75,7 +74,7 @@ useLabelAutoRefresh({
   workspaceSlug,
   projectId,
   enabled: isOpen,
-  intervalMs: 15000,  // Refresh every 15 seconds
+  intervalMs: 15000, // Refresh every 15 seconds
 });
 ```
 
@@ -87,7 +86,7 @@ To disable auto-refresh in specific contexts:
 useLabelAutoRefresh({
   workspaceSlug,
   projectId,
-  enabled: false,  // Disabled
+  enabled: false, // Disabled
 });
 ```
 
@@ -101,6 +100,7 @@ useLabelAutoRefresh({
 ## Future Enhancements
 
 Potential improvements:
+
 - WebSocket support for real-time updates (eliminates polling)
 - Configurable refresh intervals per workspace/project
 - Visual indicator when new labels are detected
@@ -109,6 +109,6 @@ Potential improvements:
 
 ## Files Modified
 
-1. `apps/web/core/store/label.store.ts` - Added refresh and cache invalidation methods
+1. `apps/web/core/store/label.store.ts` - Added `refreshProjectLabels` (merge + prune reconcile)
 2. `apps/web/core/hooks/use-label-auto-refresh.ts` - New hook for auto-refresh functionality
 3. `apps/web/core/components/issues/issue-layouts/properties/label-dropdown.tsx` - Integrated auto-refresh hook
