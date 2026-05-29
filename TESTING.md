@@ -87,6 +87,7 @@ Tests currently cover:
 
 - ✅ `useLabelAutoRefresh` hook - Auto-refresh interval, enable/disable, and hidden-tab behavior
 - ✅ `LabelStore.refreshProjectLabels` - Merge/prune reconcile logic
+- ✅ `useIssueCoverImage` hook - Explicit-id vs. filename-fallback resolution, no-attachment short-circuit, and stale-fetch guard
 
 ## Future Work
 
