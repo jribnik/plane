@@ -6,6 +6,7 @@ services:
       dockerfile: ./apps/web/Dockerfile.web
       args:
         DOCKER_BUILDKIT: 1
+        VITE_APP_VERSION: ${APP_GIT_SHA:-}
     restart: always
     depends_on:
       - api

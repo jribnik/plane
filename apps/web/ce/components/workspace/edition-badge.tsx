@@ -16,6 +16,9 @@ import packageJson from "package.json";
 import { PaidPlanUpgradeModal } from "../license";
 import { Button } from "@plane/propel/button";
 
+// Short git SHA baked in at build time (VITE_APP_VERSION); empty in plain dev.
+const buildSha = process.env.VITE_APP_VERSION ?? "";
+
 export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
   // states
   const [isPaidPlanPurchaseModalOpen, setIsPaidPlanPurchaseModalOpen] = useState(false);
@@ -30,7 +33,10 @@ export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
         isOpen={isPaidPlanPurchaseModalOpen}
         handleClose={() => setIsPaidPlanPurchaseModalOpen(false)}
       />
-      <Tooltip tooltipContent={`Version: v${packageJson.version}`} isMobile={isMobile}>
+      <Tooltip
+        tooltipContent={`Version: v${packageJson.version}${buildSha ? ` (${buildSha})` : ""}`}
+        isMobile={isMobile}
+      >
         <Button
           variant="tertiary"
           size="lg"
