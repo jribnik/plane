@@ -7,7 +7,6 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // ui
-import { PROJECT_VIEW_TRACKER_ELEMENTS } from "@plane/constants";
 import { Button } from "@plane/propel/button";
 import { ViewsIcon } from "@plane/propel/icons";
 import { Breadcrumbs, Header } from "@plane/ui";
@@ -18,7 +17,7 @@ import { ViewListHeader } from "@/components/views/view-list-header";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 // plane web imports
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
+import { CommonProjectBreadcrumbs } from "@/components/breadcrumbs/common";
 
 export const ProjectViewsHeader = observer(function ProjectViewsHeader() {
   const { workspaceSlug, projectId } = useParams();
@@ -48,12 +47,7 @@ export const ProjectViewsHeader = observer(function ProjectViewsHeader() {
         <Header.RightItem>
           <ViewListHeader />
           <div>
-            <Button
-              data-ph-element={PROJECT_VIEW_TRACKER_ELEMENTS.RIGHT_HEADER_ADD_BUTTON}
-              variant="primary"
-              size="lg"
-              onClick={() => toggleCreateViewModal(true)}
-            >
+            <Button variant="primary" size="lg" onClick={() => toggleCreateViewModal(true)}>
               Add view
             </Button>
           </div>

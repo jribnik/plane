@@ -1,9 +1,6 @@
-import * as matchers from "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach, expect } from "vitest";
-
-// Add jest-dom matchers
-expect.extend(matchers);
+import { afterEach } from "vitest";
 
 // jsdom does not provide a Storage implementation, so install an in-memory
 // one that actually persists within a test. A no-op stub would silently drop
