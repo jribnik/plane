@@ -5,10 +5,12 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 # Django imports
 from django.db import models
+from django.db.models import Q
 
 # Module imports
 from plane.utils.html_processor import strip_tags
@@ -62,12 +64,49 @@ class Page(BaseModel):
         verbose_name_plural = "Pages"
         db_table = "pages"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(
+                fields=["workspace", "is_global"],
+                condition=Q(is_global=True),
+                name="page_workspace_global_idx",
+            ),
+        ]
 
     def __str__(self):
         """Return owner email and page name"""
         return f"{self.owned_by.email} <{self.name}>"
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # Stash the parent as loaded from the database so save() can cheaply
+        # tell whether `parent` actually changed on this instance, without
+        # requiring a query on every autosave.
+        instance._loaded_parent_id = instance.parent_id
+        return instance
+
     def save(self, *args, **kwargs):
+        # A page's parent must live in the same scope: a global page can only
+        # be parented under another global page, and a project page can only
+        # be parented under another project page. Only re-check when `parent`
+        # is actually changing (new page with a parent, or an existing page
+        # whose parent field changed) since save() runs on every editor
+        # autosave via the description-update path and must stay fast.
+        if self.parent_id is not None:
+            if self.parent_id == self.pk:
+                raise ValidationError("A page cannot be set as its own parent.")
+
+            if self._state.adding or self.parent_id != getattr(self, "_loaded_parent_id", None):
+                parent_is_global = (
+                    Page.objects.filter(pk=self.parent_id).values_list("is_global", flat=True).first()
+                )
+                if parent_is_global is not None and parent_is_global != self.is_global:
+                    raise ValidationError(
+                        "A page's parent must be in the same scope: a global page cannot be "
+                        "parented under a project page, and a project page cannot be parented "
+                        "under a global page."
+                    )
+
         # Strip the html tags using html parser
         self.description_stripped = (
             None
