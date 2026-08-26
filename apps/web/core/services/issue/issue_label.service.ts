@@ -54,4 +54,36 @@ export class IssueLabelService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async getWorkspaceScopedLabels(workspaceSlug: string): Promise<IIssueLabel[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/workspace-labels/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createWorkspaceLabel(workspaceSlug: string, data: Partial<IIssueLabel>): Promise<IIssueLabel> {
+    return this.post(`/api/workspaces/${workspaceSlug}/workspace-labels/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async patchWorkspaceLabel(workspaceSlug: string, labelId: string, data: Partial<IIssueLabel>): Promise<any> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/workspace-labels/${labelId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteWorkspaceLabel(workspaceSlug: string, labelId: string): Promise<any> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/workspace-labels/${labelId}/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

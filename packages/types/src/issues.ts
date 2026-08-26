@@ -63,7 +63,7 @@ export interface IIssueLabel {
   id: string;
   name: string;
   color: string;
-  project_id: string;
+  project_id: string | null;
   workspace_id: string;
   parent: string | null;
   sort_order: number;

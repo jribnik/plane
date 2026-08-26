@@ -19,10 +19,14 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   data: IIssueLabel | null;
+  /** When provided, used instead of the default project-scoped delete call (e.g. for workspace-scoped labels). */
+  onConfirmDelete?: () => Promise<void>;
+  /** Whether the label being deleted is workspace-scoped, used to tailor the confirmation copy. */
+  isWorkspaceScoped?: boolean;
 };
 
 export const DeleteLabelModal = observer(function DeleteLabelModal(props: Props) {
-  const { isOpen, onClose, data } = props;
+  const { isOpen, onClose, data, onConfirmDelete, isWorkspaceScoped = false } = props;
   // router
   const { workspaceSlug, projectId } = useParams();
   // store hooks
@@ -36,13 +40,25 @@ export const DeleteLabelModal = observer(function DeleteLabelModal(props: Props)
   };
 
   const handleDeletion = async () => {
-    if (!workspaceSlug || !projectId || !data) return;
+    if (!data) return;
 
     setIsDeleteLoading(true);
 
-    await deleteLabel(workspaceSlug.toString(), projectId.toString(), data.id)
+    const deletePromise = onConfirmDelete
+      ? onConfirmDelete()
+      : workspaceSlug && projectId
+        ? deleteLabel(workspaceSlug.toString(), projectId.toString(), data.id)
+        : undefined;
+
+    if (!deletePromise) {
+      setIsDeleteLoading(false);
+      return;
+    }
+
+    await deletePromise
       .then(() => {
         handleClose();
+        return;
       })
       .catch((err) => {
         setIsDeleteLoading(false);
@@ -63,10 +79,18 @@ export const DeleteLabelModal = observer(function DeleteLabelModal(props: Props)
       isOpen={isOpen}
       title="Delete Label"
       content={
-        <>
-          Are you sure you want to delete <span className="font-medium text-primary">{data?.name}</span>? This will
-          remove the label from all the work item and from any views where the label is being filtered upon.
-        </>
+        isWorkspaceScoped ? (
+          <>
+            Are you sure you want to delete <span className="font-medium text-primary">{data?.name}</span>? This is a
+            workspace-level label and will be removed from all work items across every project in the workspace, and
+            from any views where the label is being filtered upon.
+          </>
+        ) : (
+          <>
+            Are you sure you want to delete <span className="font-medium text-primary">{data?.name}</span>? This will
+            remove the label from all the work item and from any views where the label is being filtered upon.
+          </>
+        )
       }
     />
   );

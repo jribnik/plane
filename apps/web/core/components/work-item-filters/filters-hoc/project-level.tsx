@@ -48,7 +48,7 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
   const { data: currentUser } = useUser();
   const { allowPermissions } = useUserPermissions();
   const { getProjectCycleIds } = useCycle();
-  const { getProjectLabelIds } = useLabel();
+  const { getProjectAvailableLabelIds } = useLabel();
   const {
     project: { getProjectMemberIds },
   } = useMember();
@@ -156,6 +156,7 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
             title: "Success!",
             message: "Your view has been updated successfully.",
           });
+          return;
         })
         .catch(() => {
           setToast({
@@ -203,7 +204,7 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
         {...props}
         workspaceSlug={workspaceSlug}
         cycleIds={getProjectCycleIds(projectId) ?? undefined}
-        labelIds={getProjectLabelIds(projectId)}
+        labelIds={getProjectAvailableLabelIds(projectId)}
         memberIds={getProjectMemberIds(projectId, false) ?? undefined}
         moduleIds={getProjectModuleIds(projectId) ?? undefined}
         stateIds={getProjectStateIds(projectId)}

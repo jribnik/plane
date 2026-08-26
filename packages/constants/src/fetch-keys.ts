@@ -66,6 +66,9 @@ export const WORKSPACE_CYCLES = (workspaceSlug: string) => `WORKSPACE_CYCLES_${w
 
 export const WORKSPACE_LABELS = (workspaceSlug: string) => `WORKSPACE_LABELS_${workspaceSlug.toUpperCase()}`;
 
+export const WORKSPACE_SCOPED_LABELS = (workspaceSlug: string) =>
+  `WORKSPACE_SCOPED_LABELS_${workspaceSlug.toUpperCase()}`;
+
 export const WORKSPACE_ESTIMATES = (workspaceSlug: string) => `WORKSPACE_ESTIMATES_${workspaceSlug.toUpperCase()}`;
 
 export const WORKSPACE_WORKFLOW_STATES = (workspaceSlug: string) =>

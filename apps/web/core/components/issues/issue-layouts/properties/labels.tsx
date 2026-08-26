@@ -186,9 +186,9 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   // store hooks
-  const { getProjectLabels } = useLabel();
+  const { getProjectAvailableLabels } = useLabel();
   const { isMobile } = usePlatformOS();
-  const storeLabels = getProjectLabels(projectId);
+  const storeLabels = getProjectAvailableLabels(projectId);
 
   const handleClose = () => {
     if (!isOpen) return;

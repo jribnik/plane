@@ -31,9 +31,13 @@ export interface ILabelStore {
   getProjectLabels: (projectId: string | undefined | null) => IIssueLabel[] | undefined;
   getProjectLabelIds: (projectId: string | undefined | null) => string[] | undefined;
   getLabelById: (labelId: string) => IIssueLabel | null;
+  getWorkspaceScopedLabels: (workspaceSlug: string) => IIssueLabel[] | undefined;
+  getProjectAvailableLabels: (projectId: string | undefined | null) => IIssueLabel[] | undefined;
+  getProjectAvailableLabelIds: (projectId: string | undefined | null) => string[] | undefined;
   // fetch actions
   fetchWorkspaceLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   fetchProjectLabels: (workspaceSlug: string, projectId: string) => Promise<IIssueLabel[]>;
+  fetchWorkspaceScopedLabels: (workspaceSlug: string) => Promise<IIssueLabel[]>;
   // crud actions
   createLabel: (workspaceSlug: string, projectId: string, data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
   updateLabel: (
@@ -51,6 +55,9 @@ export interface ILabelStore {
     dropAtEndOfList: boolean
   ) => Promise<void>;
   deleteLabel: (workspaceSlug: string, projectId: string, labelId: string) => Promise<void>;
+  createWorkspaceLabel: (workspaceSlug: string, data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
+  updateWorkspaceLabel: (workspaceSlug: string, labelId: string, data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
+  deleteWorkspaceLabel: (workspaceSlug: string, labelId: string) => Promise<void>;
 }
 
 export class LabelStore implements ILabelStore {
@@ -72,10 +79,14 @@ export class LabelStore implements ILabelStore {
       projectLabelsTree: computed,
 
       fetchProjectLabels: action,
+      fetchWorkspaceScopedLabels: action,
       createLabel: action,
       updateLabel: action,
       updateLabelPosition: action,
       deleteLabel: action,
+      createWorkspaceLabel: action,
+      updateWorkspaceLabel: action,
+      deleteWorkspaceLabel: action,
     });
 
     // root store
@@ -155,6 +166,55 @@ export class LabelStore implements ILabelStore {
   getLabelById = computedFn((labelId: string): IIssueLabel | null => this.labelMap?.[labelId] || null);
 
   /**
+   * Returns the workspace-scoped (project_id === null) labelMap for a specific workspace
+   * @param workspaceSlug
+   */
+  getWorkspaceScopedLabels = computedFn((workspaceSlug: string) => {
+    const workspaceDetails = this.rootStore.workspaceRoot.getWorkspaceBySlug(workspaceSlug);
+    if (!workspaceDetails || !this.fetchedMap[`workspace-labels-${workspaceSlug}`]) return;
+    return sortBy(
+      Object.values(this.labelMap).filter(
+        (label) => label.workspace_id === workspaceDetails.id && label.project_id === null
+      ),
+      "sort_order"
+    );
+  });
+
+  /**
+   * Resolves the workspace slug a given project belongs to
+   * @param projectId
+   */
+  private getWorkspaceSlugForProject = computedFn((projectId: string | undefined | null) => {
+    if (!projectId) return undefined;
+    const project = this.rootStore.projectRoot.project.getProjectById(projectId);
+    const workspaceId = typeof project?.workspace === "string" ? project.workspace : project?.workspace?.id;
+    if (!workspaceId) return undefined;
+    return this.rootStore.workspaceRoot.getWorkspaceById(workspaceId)?.slug;
+  });
+
+  /**
+   * Returns the merged list of workspace-scoped labels (for the project's workspace) and
+   * the project's own labels, for use in pickers/filters that should show both.
+   * @param projectId
+   */
+  getProjectAvailableLabels = computedFn((projectId: string | undefined | null) => {
+    if (!projectId) return undefined;
+    const projectLabels = this.getProjectLabels(projectId);
+    const workspaceSlug = this.getWorkspaceSlugForProject(projectId);
+    const workspaceScopedLabels = workspaceSlug ? this.getWorkspaceScopedLabels(workspaceSlug) : undefined;
+    if (!projectLabels && !workspaceScopedLabels) return undefined;
+    return [...(workspaceScopedLabels ?? []), ...(projectLabels ?? [])];
+  });
+
+  /**
+   * Returns the label ids for the merged workspace-scoped + project label list
+   * @param projectId
+   */
+  getProjectAvailableLabelIds = computedFn((projectId: string | undefined | null) =>
+    this.getProjectAvailableLabels(projectId)?.map((label) => label.id)
+  );
+
+  /**
    * Fetches all the labelMap belongs to a specific project
    * @param workspaceSlug
    * @param projectId
@@ -184,6 +244,22 @@ export class LabelStore implements ILabelStore {
           set(this.labelMap, [label.id], label);
         });
         set(this.fetchedMap, workspaceSlug, true);
+      });
+      return response;
+    });
+
+  /**
+   * Fetches all the workspace-scoped (project_id === null) labelMap belonging to a specific workspace
+   * @param workspaceSlug
+   * @returns Promise<IIssueLabel[]>
+   */
+  fetchWorkspaceScopedLabels = async (workspaceSlug: string) =>
+    await this.issueLabelService.getWorkspaceScopedLabels(workspaceSlug).then((response) => {
+      runInAction(() => {
+        response.forEach((label) => {
+          set(this.labelMap, [label.id], label);
+        });
+        set(this.fetchedMap, `workspace-labels-${workspaceSlug}`, true);
       });
       return response;
     });
@@ -304,6 +380,59 @@ export class LabelStore implements ILabelStore {
       runInAction(() => {
         delete this.labelMap[labelId];
       });
+      return;
     });
+  };
+
+  /**
+   * Creates a new workspace-scoped label and adds it to the store
+   * @param workspaceSlug
+   * @param data
+   * @returns Promise<IIssueLabel>
+   */
+  createWorkspaceLabel = async (workspaceSlug: string, data: Partial<IIssueLabel>) =>
+    await this.issueLabelService.createWorkspaceLabel(workspaceSlug, data).then((response) => {
+      runInAction(() => {
+        set(this.labelMap, [response.id], response);
+      });
+      return response;
+    });
+
+  /**
+   * Updates a workspace-scoped label and updates it in the store, rolling back on failure
+   * @param workspaceSlug
+   * @param labelId
+   * @param data
+   * @returns Promise<IIssueLabel>
+   */
+  updateWorkspaceLabel = async (workspaceSlug: string, labelId: string, data: Partial<IIssueLabel>) => {
+    const originalLabel = this.labelMap[labelId];
+    try {
+      runInAction(() => {
+        set(this.labelMap, [labelId], { ...originalLabel, ...data });
+      });
+      const response = await this.issueLabelService.patchWorkspaceLabel(workspaceSlug, labelId, data);
+      return response;
+    } catch (error) {
+      console.log("Failed to update label from workspace store");
+      runInAction(() => {
+        set(this.labelMap, [labelId], originalLabel);
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * Delete a workspace-scoped label and remove it from the labelMap object
+   * @param workspaceSlug
+   * @param labelId
+   */
+  deleteWorkspaceLabel = async (workspaceSlug: string, labelId: string) => {
+    if (!this.labelMap[labelId]) return;
+    await this.issueLabelService.deleteWorkspaceLabel(workspaceSlug, labelId).then(() =>
+      runInAction(() => {
+        delete this.labelMap[labelId];
+      })
+    );
   };
 }

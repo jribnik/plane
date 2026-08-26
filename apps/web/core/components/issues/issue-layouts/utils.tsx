@@ -281,11 +281,11 @@ const getPriorityColumns = (): IGroupByColumn[] => {
   }));
 };
 
-const getLabelsColumns = ({ isWorkspaceLevel }: TGetColumns): IGroupByColumn[] => {
-  const { workspaceLabels, projectLabels } = store.label;
+const getLabelsColumns = ({ isWorkspaceLevel, projectId }: TGetColumns): IGroupByColumn[] => {
+  const { workspaceLabels, getProjectAvailableLabels } = store.label;
   // map labels to group by columns
   const labels = [
-    ...(isWorkspaceLevel ? workspaceLabels || [] : projectLabels || []),
+    ...(isWorkspaceLevel ? workspaceLabels || [] : getProjectAvailableLabels(projectId) || []),
     { id: "None", name: "None", color: "#666" },
   ];
   // map labels to group by columns

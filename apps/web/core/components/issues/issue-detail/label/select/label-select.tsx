@@ -37,7 +37,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
   const { t } = useTranslation();
   // store hooks
   const { isMobile } = usePlatformOS();
-  const { fetchProjectLabels, getProjectLabels } = useLabel();
+  const { fetchProjectLabels, getProjectAvailableLabels } = useLabel();
   const { allowPermissions } = useUserPermissions();
   // states
   const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
@@ -49,7 +49,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
   const canCreateLabel =
     projectId && allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId);
 
-  const projectLabels = getProjectLabels(projectId);
+  const projectLabels = getProjectAvailableLabels(projectId);
 
   const { baseTabIndex } = getTabIndex(undefined, isMobile);
 
@@ -62,6 +62,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
   const options = (projectLabels ?? []).map((label) => ({
     value: label.id,
     query: label.name,
+    isWorkspaceLabel: !label.project_id,
     content: (
       <div className="flex items-center justify-start gap-2 overflow-hidden">
         <span
@@ -75,8 +76,13 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
     ),
   }));
 
-  const filteredOptions =
+  const searchedOptions =
     query === "" ? options : options?.filter((option) => option.query.toLowerCase().includes(query.toLowerCase()));
+
+  // workspace-scoped labels rendered as a distinct group above the project's own labels
+  const workspaceLabelOptions = searchedOptions.filter((option) => option.isWorkspaceLabel);
+  const projectLabelOptions = searchedOptions.filter((option) => !option.isWorkspaceLabel);
+  const filteredOptions = [...workspaceLabelOptions, ...projectLabelOptions];
 
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: "bottom-start",
@@ -92,7 +98,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
 
   const issueLabels = values ?? [];
 
-  const label = <span className="text-body-xs-medium text-placeholder">{t("label.select")}</span>;
+  const placeholderLabel = <span className="text-body-xs-medium text-placeholder">{t("label.select")}</span>;
 
   const searchInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (query !== "" && e.key === "Escape") {
@@ -135,7 +141,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
             prependIcon={<PlusIcon />}
             onClick={() => !projectLabels && fetchLabels()}
           >
-            {label}
+            {placeholderLabel}
           </Button>
         </Combobox.Button>
 
@@ -164,28 +170,58 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
               {isLoading ? (
                 <p className="text-center text-secondary">{t("common.loading")}</p>
               ) : filteredOptions.length > 0 ? (
-                filteredOptions.map((option) => (
-                  <Combobox.Option
-                    key={option.value}
-                    value={option.value}
-                    className={({ selected }) =>
-                      `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
-                        selected ? "text-primary" : "text-secondary"
-                      }`
-                    }
-                  >
-                    {({ selected }) => (
-                      <>
-                        {option.content}
-                        {selected && (
-                          <div className="flex-shrink-0">
-                            <CheckIcon className={`h-3.5 w-3.5`} />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </Combobox.Option>
-                ))
+                <>
+                  {workspaceLabelOptions.length > 0 && (
+                    <p className="px-1 py-1 text-caption-sm-medium text-tertiary uppercase">{t("common.workspace")}</p>
+                  )}
+                  {workspaceLabelOptions.map((option) => (
+                    <Combobox.Option
+                      key={option.value}
+                      value={option.value}
+                      className={({ selected }) =>
+                        `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
+                          selected ? "text-primary" : "text-secondary"
+                        }`
+                      }
+                    >
+                      {({ selected }) => (
+                        <>
+                          {option.content}
+                          {selected && (
+                            <div className="flex-shrink-0">
+                              <CheckIcon className={`h-3.5 w-3.5`} />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </Combobox.Option>
+                  ))}
+                  {workspaceLabelOptions.length > 0 && projectLabelOptions.length > 0 && (
+                    <p className="px-1 py-1 text-caption-sm-medium text-tertiary uppercase">{t("common.project")}</p>
+                  )}
+                  {projectLabelOptions.map((option) => (
+                    <Combobox.Option
+                      key={option.value}
+                      value={option.value}
+                      className={({ selected }) =>
+                        `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
+                          selected ? "text-primary" : "text-secondary"
+                        }`
+                      }
+                    >
+                      {({ selected }) => (
+                        <>
+                          {option.content}
+                          {selected && (
+                            <div className="flex-shrink-0">
+                              <CheckIcon className={`h-3.5 w-3.5`} />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </Combobox.Option>
+                  ))}
+                </>
               ) : submitting ? (
                 <Loader className="spin h-3.5 w-3.5" />
               ) : canCreateLabel ? (

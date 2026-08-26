@@ -46,6 +46,11 @@ export interface ILabelDropdownProps {
   label: React.ReactNode;
 }
 
+const preventPropagation = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
 export function LabelDropdown(props: ILabelDropdownProps) {
   const {
     projectId,
@@ -86,9 +91,9 @@ export function LabelDropdown(props: ILabelDropdownProps) {
   const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
 
   //hooks
-  const { fetchProjectLabels, getProjectLabels, createLabel } = useLabel();
+  const { fetchProjectLabels, getProjectAvailableLabels, createLabel } = useLabel();
   const { isMobile } = usePlatformOS();
-  const storeLabels = getProjectLabels(projectId);
+  const storeLabels = getProjectAvailableLabels(projectId);
   const { allowPermissions } = useUserPermissions();
 
   const canCreateLabel =
@@ -99,31 +104,53 @@ export function LabelDropdown(props: ILabelDropdownProps) {
 
   const options = useMemo(
     () =>
-      projectLabels.map((label) => ({
-        value: label?.id,
-        query: label?.name,
+      projectLabels.map((projectLabel) => ({
+        value: projectLabel?.id,
+        query: projectLabel?.name,
+        isWorkspaceLabel: !projectLabel?.project_id,
         content: (
           <div className="flex items-center justify-start gap-2 overflow-hidden">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
               style={{
-                backgroundColor: label?.color,
+                backgroundColor: projectLabel?.color,
               }}
             />
-            <div className="line-clamp-1 inline-block truncate">{label?.name}</div>
+            <div className="line-clamp-1 inline-block truncate">{projectLabel?.name}</div>
           </div>
         ),
       })),
     [projectLabels]
   );
 
-  const filteredOptions = useMemo(
+  const searchedOptions = useMemo(
+    () =>
+      (query === ""
+        ? options
+        : options?.filter((option) => option.query.toLowerCase().includes(query.toLowerCase()))) ?? [],
+    [options, query]
+  );
+
+  // workspace-scoped labels rendered as a distinct group above the project's own labels
+  const workspaceLabelOptions = useMemo(
     () =>
       sortBySelectedFirst(
-        query === "" ? options : options?.filter((option) => option.query.toLowerCase().includes(query.toLowerCase())),
+        searchedOptions.filter((option) => option.isWorkspaceLabel),
         value
-      ),
-    [options, query, value]
+      ) ?? [],
+    [searchedOptions, value]
+  );
+  const projectLabelOptions = useMemo(
+    () =>
+      sortBySelectedFirst(
+        searchedOptions.filter((option) => !option.isWorkspaceLabel),
+        value
+      ) ?? [],
+    [searchedOptions, value]
+  );
+  const filteredOptions = useMemo(
+    () => [...workspaceLabelOptions, ...projectLabelOptions],
+    [workspaceLabelOptions, projectLabelOptions]
   );
 
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
@@ -163,8 +190,8 @@ export function LabelDropdown(props: ILabelDropdownProps) {
   const handleAddLabel = async (labelName: string) => {
     if (!projectId) return;
     setSubmitting(true);
-    const label = await createLabel(workspaceSlug, projectId, { name: labelName, color: getRandomLabelColor() });
-    onChange([...value, label.id]);
+    const newLabel = await createLabel(workspaceSlug, projectId, { name: labelName, color: getRandomLabelColor() });
+    onChange([...value, newLabel.id]);
     setQuery("");
     setSubmitting(false);
   };
@@ -232,13 +259,10 @@ export function LabelDropdown(props: ILabelDropdownProps) {
     ]
   );
 
-  const preventPropagation = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
   return (
+    // oxlint-disable-next-line jsx_a11y/click-events-have-key-events oxlint-disable-next-line jsx_a11y/no-static-element-interactions
     <div className={`${fullHeight ? "h-full" : "h-5"}`} onClick={preventPropagation}>
+      {/* oxlint-disable-next-line jsx_a11y/no-static-element-interactions */}
       <ComboDropDown
         as="div"
         ref={dropdownRef}
@@ -275,37 +299,76 @@ export function LabelDropdown(props: ILabelDropdownProps) {
                 {isLoading ? (
                   <p className="text-center text-secondary">{t("common.loading")}</p>
                 ) : filteredOptions && filteredOptions.length > 0 ? (
-                  filteredOptions.map((option) => (
-                    <Combobox.Option
-                      key={option.value}
-                      value={option.value}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          e.stopPropagation();
+                  <>
+                    {workspaceLabelOptions.length > 0 && (
+                      <p className="px-1 py-1 text-caption-sm-medium text-tertiary uppercase">
+                        {t("common.workspace")}
+                      </p>
+                    )}
+                    {workspaceLabelOptions.map((option) => (
+                      <Combobox.Option
+                        key={option.value}
+                        value={option.value}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                        }}
+                        className={({ active, selected }) =>
+                          `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
+                            active ? "bg-layer-1" : ""
+                          } ${selected ? "text-primary" : "text-secondary"}`
                         }
-                      }}
-                      className={({ active, selected }) =>
-                        `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
-                          active ? "bg-layer-1" : ""
-                        } ${selected ? "text-primary" : "text-secondary"}`
-                      }
-                    >
-                      {({ selected }) => (
-                        <>
-                          {option.content}
-                          {selected && (
-                            <div className="flex-shrink-0">
-                              <CheckIcon className={`h-3.5 w-3.5`} />
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </Combobox.Option>
-                  ))
+                      >
+                        {({ selected }) => (
+                          <>
+                            {option.content}
+                            {selected && (
+                              <div className="flex-shrink-0">
+                                <CheckIcon className={`h-3.5 w-3.5`} />
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </Combobox.Option>
+                    ))}
+                    {workspaceLabelOptions.length > 0 && projectLabelOptions.length > 0 && (
+                      <p className="px-1 py-1 text-caption-sm-medium text-tertiary uppercase">{t("common.project")}</p>
+                    )}
+                    {projectLabelOptions.map((option) => (
+                      <Combobox.Option
+                        key={option.value}
+                        value={option.value}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                        }}
+                        className={({ active, selected }) =>
+                          `flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none hover:bg-layer-1 ${
+                            active ? "bg-layer-1" : ""
+                          } ${selected ? "text-primary" : "text-secondary"}`
+                        }
+                      >
+                        {({ selected }) => (
+                          <>
+                            {option.content}
+                            {selected && (
+                              <div className="flex-shrink-0">
+                                <CheckIcon className={`h-3.5 w-3.5`} />
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </Combobox.Option>
+                    ))}
+                  </>
                 ) : submitting ? (
                   <Loader className="h-3.5 w-3.5 animate-spin" />
                 ) : canCreateLabel ? (
+                  // oxlint-disable-next-line jsx_a11y/click-events-have-key-events
                   <p
                     onClick={() => {
                       if (!query.length) return;
