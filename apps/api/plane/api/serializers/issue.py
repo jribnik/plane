@@ -6,6 +6,7 @@
 from django.utils import timezone
 from lxml import html
 from django.db import IntegrityError
+from django.db.models import Q
 
 #  Third party imports
 from rest_framework import serializers
@@ -112,10 +113,13 @@ class IssueSerializer(BaseSerializer):
                 member_id__in=data["assignees"],
             ).values_list("member_id", flat=True)
 
-        # Validate labels are from project
+        # Validate labels are from the project, or are workspace-scoped labels
+        # belonging to the same workspace as the project
         if data.get("labels", []):
             data["labels"] = Label.objects.filter(
-                project_id=self.context.get("project_id"), id__in=data["labels"]
+                Q(project_id=self.context.get("project_id"))
+                | Q(project__isnull=True, workspace_id=self.context.get("workspace_id")),
+                id__in=data["labels"],
             ).values_list("id", flat=True)
 
         # Check state is from the project only else raise validation error

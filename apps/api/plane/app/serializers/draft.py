@@ -4,6 +4,7 @@
 
 # Django imports
 from django.utils import timezone
+from django.db.models import Q
 
 # Third Party imports
 from rest_framework import serializers
@@ -99,13 +100,16 @@ class DraftIssueCreateSerializer(BaseSerializer):
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
 
-        # Validate labels are from project
+        # Validate labels are from the project, or are workspace-scoped labels
+        # belonging to the same workspace as the project
         if attrs.get("label_ids"):
             label_ids = [label.id for label in attrs["label_ids"]]
             attrs["label_ids"] = list(
-                Label.objects.filter(project_id=self.context.get("project_id"), id__in=label_ids).values_list(
-                    "id", flat=True
-                )
+                Label.objects.filter(
+                    Q(project_id=self.context.get("project_id"))
+                    | Q(project__isnull=True, workspace_id=self.context.get("workspace_id")),
+                    id__in=label_ids,
+                ).values_list("id", flat=True)
             )
 
         # # Check state is from the project only else raise validation error

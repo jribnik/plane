@@ -173,6 +173,7 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
             partial=True,
             context={
                 "project_id": project_id,
+                "workspace_id": issue.workspace_id,
                 "cycle_id": request.data.get("cycle_id", "not_provided"),
             },
         )

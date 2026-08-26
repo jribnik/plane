@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import Q
 
 # Third Party imports
 from rest_framework import serializers
@@ -155,12 +156,14 @@ class IssueCreateSerializer(BaseSerializer):
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
 
-        # Validate labels are from project
+        # Validate labels are from the project, or are workspace-scoped labels
+        # belonging to the same workspace as the project
         if attrs.get("label_ids"):
             label_ids = [label.id for label in attrs["label_ids"]]
             attrs["label_ids"] = list(
                 Label.objects.filter(
-                    project_id=self.context.get("project_id"),
+                    Q(project_id=self.context.get("project_id"))
+                    | Q(project__isnull=True, workspace_id=self.context.get("workspace_id")),
                     id__in=label_ids,
                 ).values_list("id", flat=True)
             )
@@ -375,7 +378,14 @@ class LabelSerializer(BaseSerializer):
     def validate_name(self, value):
         project_id = self.context.get("project_id")
 
-        label = Label.objects.filter(project_id=project_id, name__iexact=value)
+        if project_id:
+            label = Label.objects.filter(project_id=project_id, name__iexact=value)
+        else:
+            # Workspace-scoped label: uniqueness is scoped to the workspace
+            # among other workspace-scoped labels (project is NULL), not
+            # unscoped across every workspace on the deployment.
+            workspace_id = self.context.get("workspace_id")
+            label = Label.objects.filter(workspace_id=workspace_id, project__isnull=True, name__iexact=value)
 
         if self.instance:
             label = label.exclude(id=self.instance.pk)
