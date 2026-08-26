@@ -6,6 +6,7 @@
 
 import { isEmpty } from "lodash-es";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane helpers
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 // components
@@ -14,11 +15,14 @@ import { SidebarFavoritesMenu } from "@/components/workspace/sidebar/favorites/f
 import { SidebarProjectsList } from "@/components/workspace/sidebar/projects-list";
 import { SidebarQuickActions } from "@/components/workspace/sidebar/quick-actions";
 import { SidebarMenuItems } from "@/components/workspace/sidebar/sidebar-menu-items";
+import { WikiMenuItem } from "@/components/workspace/sidebar/wiki-menu-item";
 // hooks
 import { useFavorite } from "@/hooks/store/use-favorite";
 import { useUserPermissions } from "@/hooks/store/user";
 
 export const AppSidebar = observer(function AppSidebar() {
+  // router
+  const { workspaceSlug } = useParams();
   // store hooks
   const { allowPermissions } = useUserPermissions();
   const { groupedFavorites } = useFavorite();
@@ -34,6 +38,7 @@ export const AppSidebar = observer(function AppSidebar() {
   return (
     <SidebarWrapper title="Projects" quickActions={<SidebarQuickActions />}>
       <SidebarMenuItems />
+      {workspaceSlug && <WikiMenuItem workspaceSlug={workspaceSlug.toString()} />}
       {/* Favorites Menu */}
       {canPerformWorkspaceMemberActions && !isFavoriteEmpty && <SidebarFavoritesMenu />}
       {/* Projects List */}
