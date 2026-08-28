@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "標籤",
+        "description": "建立工作區層級的標籤，可用於對工作區中每個專案的工作事項進行分類和整理。",
+        "title": "標籤"
+      },
       "api_tokens": {
         "heading": "API 權杖",
         "description": "產生安全的 API 權杖，將您的資料與外部系統和應用程式整合。",

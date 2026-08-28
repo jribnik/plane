@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Placement } from "@popperjs/core";
 import { observer } from "mobx-react";
@@ -208,12 +208,14 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
   let projectLabels: IIssueLabel[] = defaultOptions as IIssueLabel[];
   if (storeLabels && storeLabels.length > 0) projectLabels = storeLabels;
 
+  const valueSet = useMemo(() => new Set(value), [value]);
+
   return (
     <>
       {value.length > 0 ? (
         value.length <= maxRender ? (
           projectLabels?.reduce<ReactNode[]>((acc, label) => {
-            if (!value.includes(label?.id)) return acc;
+            if (!valueSet.has(label?.id)) return acc;
             acc.push(
               <LabelDropdown
                 key={label.id}

@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Etichette",
+        "description": "Crea etichette a livello di spazio di lavoro che possono essere utilizzate per categorizzare e organizzare gli elementi di lavoro in tutti i progetti dello spazio di lavoro.",
+        "title": "Etichette"
+      },
       "api_tokens": {
         "heading": "Token API",
         "description": "Genera token API sicuri per integrare i tuoi dati con sistemi e applicazioni esterne.",

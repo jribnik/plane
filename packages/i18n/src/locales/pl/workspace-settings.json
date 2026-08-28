@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Etykiety",
+        "description": "Twórz etykiety na poziomie przestrzeni roboczej, których można używać do kategoryzowania i organizowania elementów pracy we wszystkich projektach w przestrzeni roboczej.",
+        "title": "Etykiety"
+      },
       "api_tokens": {
         "heading": "Tokeny API",
         "description": "Generuj bezpieczne tokeny API, aby integrować swoje dane z zewnętrznymi systemami i aplikacjami.",

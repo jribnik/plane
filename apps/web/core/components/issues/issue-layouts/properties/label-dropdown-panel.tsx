@@ -92,13 +92,11 @@ export function LabelDropdownPanel(props: Props) {
           ) : submitting ? (
             <Loader className="h-3.5 w-3.5 animate-spin" />
           ) : canCreateLabel ? (
-            // oxlint-disable-next-line jsx_a11y/click-events-have-key-events
-            <p
-              onClick={() => {
-                if (!query.length) return;
-                onAddLabel(query);
-              }}
-              className={`text-left text-secondary ${query.length ? "cursor-pointer" : "cursor-default"}`}
+            <button
+              type="button"
+              disabled={!query.length}
+              onClick={() => onAddLabel(query)}
+              className={`w-full text-left text-secondary ${query.length ? "cursor-pointer" : "cursor-default"}`}
             >
               {/* TODO: translate here */}
               {query.length ? (
@@ -108,7 +106,7 @@ export function LabelDropdownPanel(props: Props) {
               ) : (
                 t("label.create.type")
               )}
-            </p>
+            </button>
           ) : (
             <p className="text-left text-secondary">{t("common.search.no_matching_results")}</p>
           )}

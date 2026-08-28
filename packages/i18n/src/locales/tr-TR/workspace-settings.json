@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Etiketler",
+        "description": "Çalışma alanındaki her projede iş öğelerini kategorize etmek ve düzenlemek için kullanılabilecek çalışma alanı düzeyinde etiketler oluşturun.",
+        "title": "Etiketler"
+      },
       "api_tokens": {
         "heading": "API Token'ları",
         "description": "Verilerinizi harici sistemler ve uygulamalarla entegre etmek için güvenli API token'ları oluşturun.",
