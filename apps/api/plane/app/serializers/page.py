@@ -55,8 +55,9 @@ class PageSerializer(BaseSerializer):
             "logo_props",
             "label_ids",
             "project_ids",
+            "is_global",
         ]
-        read_only_fields = ["workspace", "owned_by"]
+        read_only_fields = ["workspace", "owned_by", "is_global"]
 
     def create(self, validated_data):
         labels = validated_data.pop("labels", None)

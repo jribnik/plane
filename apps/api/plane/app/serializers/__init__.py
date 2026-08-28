@@ -105,6 +105,8 @@ from .page import (
     PageVersionDetailSerializer,
 )
 
+from .workspace_page import WorkspacePageSerializer, WorkspacePageDetailSerializer
+
 from .estimate import (
     EstimateSerializer,
     EstimatePointSerializer,
