@@ -168,8 +168,16 @@ class WorkspacePageViewSet(BaseViewSet):
         if serializer.is_valid():
             try:
                 serializer.save()
-            except DjangoValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except DjangoValidationError:
+                # Don't relay the raw exception text to the client: it's a
+                # ValidationError raised by Page.save()'s scope/parent guard
+                # today, but returning str(e) verbatim risks leaking
+                # internal details if that guard ever changes to wrap a
+                # less-controlled error (e.g. a DB constraint message).
+                return Response(
+                    {"error": "The parent page must be a global page in the same workspace."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             # capture the page transaction
             if request.data.get("description_html"):
                 page_transaction.delay(
