@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import type { Placement } from "@popperjs/core";
 import { observer } from "mobx-react";
 // plane helpers
@@ -211,9 +212,9 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
     <>
       {value.length > 0 ? (
         value.length <= maxRender ? (
-          projectLabels
-            ?.filter((l) => value.includes(l?.id))
-            .map((label) => (
+          projectLabels?.reduce<ReactNode[]>((acc, label) => {
+            if (!value.includes(label?.id)) return acc;
+            acc.push(
               <LabelDropdown
                 key={label.id}
                 projectId={projectId}
@@ -235,7 +236,9 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
                   />
                 }
               />
-            ))
+            );
+            return acc;
+          }, [])
         ) : (
           <LabelDropdown
             projectId={projectId}

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
@@ -91,11 +91,14 @@ export const WorkspaceSettingsLabelList = observer(function WorkspaceSettingsLab
   const isEditable = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
   const workspaceScopedLabels = workspaceSlug ? getWorkspaceScopedLabels(workspaceSlug.toString()) : undefined;
 
-  const labelOperationsCallbacks: TLabelOperationsCallbacks = {
-    createLabel: (data: Partial<IIssueLabel>) => createWorkspaceLabel(workspaceSlug?.toString() ?? "", data),
-    updateLabel: (labelId: string, data: Partial<IIssueLabel>) =>
-      updateWorkspaceLabel(workspaceSlug?.toString() ?? "", labelId, data),
-  };
+  const labelOperationsCallbacks: TLabelOperationsCallbacks = useMemo(
+    () => ({
+      createLabel: (data: Partial<IIssueLabel>) => createWorkspaceLabel(workspaceSlug?.toString() ?? "", data),
+      updateLabel: (labelId: string, data: Partial<IIssueLabel>) =>
+        updateWorkspaceLabel(workspaceSlug?.toString() ?? "", labelId, data),
+    }),
+    [workspaceSlug, createWorkspaceLabel, updateWorkspaceLabel]
+  );
 
   const newLabel = () => {
     setEditingLabelId(null);
