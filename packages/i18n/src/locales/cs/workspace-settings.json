@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Štítky",
+        "description": "Vytvářejte štítky na úrovni pracovního prostoru, které lze použít ke kategorizaci a organizaci pracovních položek ve všech projektech v pracovním prostoru.",
+        "title": "Štítky"
+      },
       "api_tokens": {
         "heading": "API Tokeny",
         "description": "Generujte bezpečné API tokeny pro integraci vašich dat s externími systémy a aplikacemi.",

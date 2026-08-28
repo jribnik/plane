@@ -27,9 +27,9 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: TWorkI
   const { workspaceSlug } = useParams();
   // store hooks
   const { allowPermissions } = useUserPermissions();
-  const { getProjectLabelIds, getLabelById, fetchProjectLabels, createLabel } = useLabel();
+  const { getProjectAvailableLabelIds, getLabelById, fetchProjectLabels, createLabel } = useLabel();
   // derived values
-  const projectLabelIds = getProjectLabelIds(projectId);
+  const projectLabelIds = getProjectAvailableLabelIds(projectId);
 
   const canCreateLabel =
     projectId &&

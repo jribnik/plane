@@ -157,7 +157,9 @@ def issue_group_values(
     if field == "labels__id":
         queryset = Label.objects.filter(workspace__slug=slug).values_list("id", flat=True)
         if project_id:
-            return list(queryset.filter(project_id=project_id)) + ["None"]
+            # Include workspace-scoped labels (project is NULL) alongside the
+            # project's own labels as possible group-by columns/headers.
+            return list(queryset.filter(Q(project_id=project_id) | Q(project__isnull=True))) + ["None"]
         return list(queryset) + ["None"]
 
     if field == "assignees__id":

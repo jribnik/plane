@@ -21,9 +21,11 @@ type Props = {
 export const PowerKWorkItemLabelsMenu = observer(function PowerKWorkItemLabelsMenu(props: Props) {
   const { handleSelect, workItemDetails } = props;
   // store hooks
-  const { getProjectLabelIds, getLabelById } = useLabel();
+  const { getProjectAvailableLabelIds, getLabelById } = useLabel();
   // derived values
-  const projectLabelIds = workItemDetails.project_id ? getProjectLabelIds(workItemDetails.project_id) : undefined;
+  const projectLabelIds = workItemDetails.project_id
+    ? getProjectAvailableLabelIds(workItemDetails.project_id)
+    : undefined;
   const labelsList = projectLabelIds ? projectLabelIds.map((labelId) => getLabelById(labelId)) : undefined;
   const filteredLabelsList = labelsList ? labelsList.filter((label) => !!label) : undefined;
 

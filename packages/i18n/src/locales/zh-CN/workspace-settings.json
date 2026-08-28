@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "标签",
+        "description": "创建工作区级别的标签，可用于对工作区中每个项目的工作项进行分类和整理。",
+        "title": "标签"
+      },
       "api_tokens": {
         "heading": "API 令牌",
         "description": "生成安全的 API 令牌，将您的数据与外部系统和应用程序集成。",

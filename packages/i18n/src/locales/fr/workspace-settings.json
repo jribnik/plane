@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Étiquettes",
+        "description": "Créez des étiquettes au niveau de l’espace de travail qui peuvent être utilisées pour catégoriser et organiser les éléments de travail dans tous les projets de l’espace de travail.",
+        "title": "Étiquettes"
+      },
       "api_tokens": {
         "heading": "Jetons API",
         "description": "Générez des jetons API sécurisés pour intégrer vos données avec des systèmes et applications externes.",

@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Labels",
+        "description": "Create workspace-level labels that can be used to categorize and organize work items across every project in the workspace.",
+        "title": "Labels"
+      },
       "api_tokens": {
         "heading": "Access Tokens",
         "description": "Generate secure API tokens to integrate your data with external systems and applications.",

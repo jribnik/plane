@@ -4,7 +4,8 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import type { Placement } from "@popperjs/core";
 import { observer } from "mobx-react";
 // plane helpers
@@ -186,9 +187,9 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   // store hooks
-  const { getProjectLabels } = useLabel();
+  const { getProjectAvailableLabels } = useLabel();
   const { isMobile } = usePlatformOS();
-  const storeLabels = getProjectLabels(projectId);
+  const storeLabels = getProjectAvailableLabels(projectId);
 
   const handleClose = () => {
     if (!isOpen) return;
@@ -207,13 +208,15 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
   let projectLabels: IIssueLabel[] = defaultOptions as IIssueLabel[];
   if (storeLabels && storeLabels.length > 0) projectLabels = storeLabels;
 
+  const valueSet = useMemo(() => new Set(value), [value]);
+
   return (
     <>
       {value.length > 0 ? (
         value.length <= maxRender ? (
-          projectLabels
-            ?.filter((l) => value.includes(l?.id))
-            .map((label) => (
+          projectLabels?.reduce<ReactNode[]>((acc, label) => {
+            if (!valueSet.has(label?.id)) return acc;
+            acc.push(
               <LabelDropdown
                 key={label.id}
                 projectId={projectId}
@@ -235,7 +238,9 @@ export const IssuePropertyLabels = observer(function IssuePropertyLabels(props: 
                   />
                 }
               />
-            ))
+            );
+            return acc;
+          }, [])
         ) : (
           <LabelDropdown
             projectId={projectId}

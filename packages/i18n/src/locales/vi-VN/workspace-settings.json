@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Nhãn",
+        "description": "Tạo nhãn cấp không gian làm việc có thể được sử dụng để phân loại và tổ chức các mục công việc trên mọi dự án trong không gian làm việc.",
+        "title": "Nhãn"
+      },
       "api_tokens": {
         "heading": "Token API",
         "description": "Tạo token API bảo mật để tích hợp dữ liệu của bạn với các hệ thống và ứng dụng bên ngoài.",

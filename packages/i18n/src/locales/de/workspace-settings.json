@@ -150,6 +150,11 @@
           }
         }
       },
+      "labels": {
+        "heading": "Labels",
+        "description": "Erstellen Sie Labels auf Arbeitsbereichsebene, die zur Kategorisierung und Organisation von Arbeitselementen in allen Projekten des Arbeitsbereichs verwendet werden können.",
+        "title": "Labels"
+      },
       "api_tokens": {
         "heading": "API-Tokens",
         "description": "Generieren Sie sichere API-Tokens, um Ihre Daten mit externen Systemen und Anwendungen zu integrieren.",
